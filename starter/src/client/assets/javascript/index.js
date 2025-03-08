@@ -139,23 +139,30 @@ function runRace(raceID) {
 }
 
 async function runCountdown() {
-	try {
-		// Wait for the DOM to load.
-		await delay(1000)
-		let timer = 3
+    try {
+        // Wait for the DOM to load.
+        await delay(1000);
+        let timer = 3;
 
-		return new Promise(resolve => {
-			// TODO - use Javascript's built in setInterval method to count down once per second
+        return new Promise(resolve => {
+            // This promise and function work together to use setInterval to count down once per second.
+            const countdownInterval = setInterval(() => {
+                // This line updates the countdown display.
+                document.getElementById('big-numbers').innerHTML = timer;
 
-			// run this DOM manipulation inside the set interval to decrement the countdown for the user
-			document.getElementById('big-numbers').innerHTML = --timer
+                // This line decrements the timer.
+                timer--;
 
-			// TODO - when the setInterval timer hits 0, clear the interval, resolve the promise, and return
-
-		})
-	} catch(error) {
-		console.log(error);
-	}
+                // When the timer hits 0, the interval is cleared and the promise is resolved and returned
+                if (timer < 0) {
+                    clearInterval(countdownInterval); // First part of it: stop the interval.
+                    resolve(); // Second part of it: resolve the promise.
+                }
+            }, 1000); // This line sets the interval to 1 second.
+        });
+    } catch (error) {
+        console.log(error);
+    }
 }
 
 function handleSelectRacer(target) {
@@ -185,8 +192,16 @@ function handleSelectTrack(target) {
 }
 
 function handleAccelerate() {
-	console.log("accelerate button clicked")
-	// TODO - Invoke the API call to accelerate
+    console.log("accelerate button clicked");
+
+    // This function calls the accelerate function with the race_ID obtained from the store.
+    accelerate(store.race_id)
+        .then(() => {
+            console.log("Racer accelerated successfully");
+        })
+        .catch(error => {
+            console.error("Error accelerating the racer:", error);
+        });
 }
 
 // HTML VIEWS ------------------------------------------------
