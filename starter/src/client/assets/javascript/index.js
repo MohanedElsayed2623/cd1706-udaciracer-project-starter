@@ -81,58 +81,66 @@ async function delay(ms) {
 
 // ^ PROVIDED CODE ^ DO NOT REMOVE
 
-// BELOW THIS LINE IS CODE WHERE STUDENT EDITS ARE NEEDED ----------------------------
-// TIP: Do a full file search for TODO to find everything that needs to be done for the game to work
+// BELOW THIS LINE IS CODE WHERE STUDENT EDITS ARE PERFORMED ----------------------------
+
 
 // This async function controls the flow of the race, add the logic and error handling
 async function handleCreateRace() {
 	console.log("in create race")
 
-	// render starting UI
+	// Render starting UI.
 	renderAt('#race', renderRaceStartView(store.track_name))
 
-	// TODO - Get player_id and track_id from the store
+	// These two lines get the required IDs from the store object.
+	const player_id = store.player_id;
+	const track_id = store.track_id;
 	
-	// const race = TODO - call the asynchronous method createRace, passing the correct parameters
+	// Gives the variable "race" the value of calling the createRace function with both supplied IDs.
+	const race = await createRace(player_id, track_id);
+	// Updates the store using the "race" variable.
+	store.race_id = race
 
-	// TODO - update the store with the race id in the response
-	// TIP - console logging API responses can be really helpful to know what data shape you received
+	// Console logs the API response to help with debugging.
 	console.log("RACE: ", race)
-	// store.race_id = 
 	
-	// The race has been created, now start the countdown
-	// TODO - call the async function runCountdown
+	// This line starts the countdown by calling the async function runCountdown.
+	await runCountdown();
 
-	// TODO - call the async function startRace
-	// TIP - remember to always check if a function takes parameters before calling it!
+	// This line calls the async function startRace
+	await startRace(store.race_id);
 
-	// TODO - call the async function runRace
+	// This line, however, calls the async function runRace.
+	await runRace(store.race_id);
 }
 
 function runRace(raceID) {
-	return new Promise(resolve => {
-	// TODO - use Javascript's built in setInterval method to get race info (getRace function) every 500ms
+	return new Promise((resolve, reject) => {
+        // This line uses setInterval to get the new race info every 500ms.
+        const raceInterval = setInterval(async () => {
+            try {
+                const res = await getRace(raceID); // Fetches the race information.
 
-	/* 
-		TODO - if the race info status property is "in-progress", update the leaderboard by calling:
-
-		renderAt('#leaderBoard', raceProgress(res.positions))
-	*/
-
-	/* 
-		TODO - if the race info status property is "finished", run the following:
-
-		clearInterval(raceInterval) // to stop the interval from repeating
-		renderAt('#race', resultsView(res.positions)) // to render the results view
-		resolve(res) // resolve the promise
-	*/
-	})
-	// remember to add error handling for the Promise
+                // This statement checks if the race is in progress.
+                if (res.status === "in-progress") {
+                    renderAt('#leaderBoard', raceProgress(res.positions)); // ..and it updates the leaderboard if the race is in progress.
+                } 
+                // Otherwise, it checks if the race is finished.
+                else if (res.status === "finished") {
+                    clearInterval(raceInterval); // This line stops the updating interval.
+                    renderAt('#race', resultsView(res.positions)); // This line renders the results view
+                    resolve(res); // This line resolves the promise with the race results.
+                }
+            } catch (error) {
+                clearInterval(raceInterval); // If an error occurs, the interval stops.
+                reject(error); // The promise is then rejected with an error.
+            }
+        }, 500); // Here, the interval has been set to 500ms
+    });
 }
 
 async function runCountdown() {
 	try {
-		// wait for the DOM to load
+		// Wait for the DOM to load.
 		await delay(1000)
 		let timer = 3
 
